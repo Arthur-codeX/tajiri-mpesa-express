@@ -1,0 +1,31 @@
+{
+  "name": "tajiri-mpesa-express",
+  "version": "1.0.0",
+  "description": "Mpesa Express Package",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Arthur-codeX/tajiri-mpesa-express.git"
+  },
+  "keywords": [
+    "Mpesa",
+    "mpesa",
+    "Mpesa-express",
+    "Mpesa-Stk",
+    "Mpesa-query"
+  ],
+  "author": "Arthur-codeX",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Arthur-codeX/tajiri-mpesa-express/issues"
+  },
+  "homepage": "https://github.com/Arthur-codeX/tajiri-mpesa-express#readme",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "tajiri-mpesa-oauth": "^1.0.0",
+    "tajiri-mpesa-time": "^1.0.0"
+  }
+}
