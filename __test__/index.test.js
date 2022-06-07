@@ -1,5 +1,5 @@
-const MpesaExpress = require("./../index");
+// const MpesaExpress = require("./../index");
 
-const sandboxConf = {};
+// const sandboxConf = {};
 
-const liveConf = {};
+// const liveConf = {};
