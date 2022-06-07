@@ -1,5 +1,4 @@
-const time = require("tajiri-mpesa-time");
-const token = require("tajiri-mpesa-oauth");
+const mtoken = require("tajiri-mpesa-oauth");
 const password = require("tajiri-mpesa-password");
 const urls = require("./conf/urls");
 const axios = require("axios");
@@ -11,20 +10,39 @@ class MpesaExpress {
     auth_type = "Bearer",
     token_auth_type = "Basic"
   ) {
+    this.environment = environment;
     this.stkPushUrl = urls[environment].stkPush;
+    this.stkQueryUrl = urls[environment].stkQuery;
     this.auth_type = auth_type;
     this.token_auth_type = token_auth_type;
     this.conf = conf;
-    if (this.conf.GMT === null || this.conf.GMT === undefined) {
-      this.conf.GMT = 3;
-    }
   }
 
-  expressData = () => {
-    let params = password(conf, conf.GMT);
+  expressData = async (
+    PHONE,
+    AMOUNT,
+    TRANSACTION_DESCRIPTION,
+    ACCOUNT_REFERENCE
+  ) => {
+    if (TRANSACTION_DESCRIPTION != null) {
+      this.conf.TRANSACTION_DESCRIPTION = TRANSACTION_DESCRIPTION;
+    }
+    if (ACCOUNT_REFERENCE != null) {
+      this.conf.ACCOUNT_REFERENCE = ACCOUNT_REFERENCE;
+    }
+
+    if (PHONE != null) {
+      this.conf.PHONE_NUMBER = PHONE;
+    }
+
+    if (AMOUNT != null) {
+      this.conf.AMOUNT = AMOUNT;
+    }
+
+    let params = await password(this.conf);
     return {
       BusinessShortCode: this.conf.BUSINESS_SHORT_CODE,
-      password: params.password,
+      Password: params.password,
       Timestamp: params.time,
       TransactionType: this.conf.TRANSACTION_TYPE,
       Amount: this.conf.AMOUNT,
@@ -37,9 +55,19 @@ class MpesaExpress {
     };
   };
 
-  stkPush = async () => {
-    let token = await token(this.conf, this.token_auth_type);
-    let payload = this.expressData();
+  stkPush = async (
+    PHONE = null,
+    AMOUNT = null,
+    TRANSACTION_DESCRIPTION = null,
+    ACCOUNT_REFERENCE = null
+  ) => {
+    let token = await mtoken(this.conf, this.environment, this.token_auth_type);
+    let payload = await this.expressData(
+      PHONE,
+      AMOUNT,
+      TRANSACTION_DESCRIPTION,
+      ACCOUNT_REFERENCE
+    );
     let res = await axios({
       method: "POST",
       headers: {
@@ -51,7 +79,31 @@ class MpesaExpress {
     return res.data;
   };
 
-  stkQuery = async () => {};
+  stkQuery = async (id) => {
+    if (id == null) {
+      throw new Error("!!!! CheckoutRequestID Required");
+    }
+
+    let params = await password(this.conf);
+    let token = await mtoken(this.conf, this.environment, this.token_auth_type);
+
+    let payload = {
+      BusinessShortCode: this.conf.BUSINESS_SHORT_CODE,
+      Password: params.password,
+      Timestamp: params.time,
+      CheckoutRequestID: id,
+    };
+
+    let res = await axios({
+      method: "POST",
+      headers: {
+        Authorization: `${this.auth_type} ${token.access_token}`,
+      },
+      url: this.stkQueryUrl,
+      data: payload,
+    });
+    return res.data;
+  };
 }
 
 module.exports = MpesaExpress;
