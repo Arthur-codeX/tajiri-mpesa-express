@@ -21,7 +21,8 @@ class MpesaExpress {
   }
 
   expressData = async (doc) => {
-    for (let field of mpesaFields) {
+    for (let field_value of mpesaFields) {
+      let field = field_value.toUpperCase();
       if (doc[field]) {
         this.conf[field] = doc[field];
       }
@@ -78,19 +79,21 @@ class MpesaExpress {
           return {
             error: true,
             data: error.response.data,
-            custom: "From daraja",
           };
         }
-        return { error: true, data: error.response, custom: "From daraja" };
+        return { error: true, data: error.response };
       }
 
-      return { error: true, data: error, custom: "From daraja" };
+      return { error: true, data: error };
     }
   };
 
   stkQuery = async (id) => {
     if (id == null) {
-      return { error: true, custom: "Transaction id required. As parameter" };
+      return {
+        error: true,
+        data: { errorMessage: "Transaction id required. As parameter" },
+      };
     }
 
     try {
@@ -123,13 +126,12 @@ class MpesaExpress {
           return {
             error: true,
             data: error.response.data,
-            custom: "From daraja",
           };
         }
-        return { error: true, data: error.response, custom: "From daraja" };
+        return { error: true, data: error.response };
       }
 
-      return { error: true, data: error, custom: "From daraja" };
+      return { error: true, data: error };
     }
   };
 }
