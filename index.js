@@ -3,6 +3,8 @@ const password = require("tajiri-mpesa-password");
 const urls = require("./conf/urls");
 const axios = require("axios");
 
+const { mpesaFields } = require("./conf/fields");
+
 class MpesaExpress {
   constructor(
     conf,
@@ -18,28 +20,15 @@ class MpesaExpress {
     this.conf = conf;
   }
 
-  expressData = async (
-    PHONE,
-    AMOUNT,
-    TRANSACTION_DESCRIPTION,
-    ACCOUNT_REFERENCE
-  ) => {
-    if (TRANSACTION_DESCRIPTION != null) {
-      this.conf.TRANSACTION_DESCRIPTION = TRANSACTION_DESCRIPTION;
-    }
-    if (ACCOUNT_REFERENCE != null) {
-      this.conf.ACCOUNT_REFERENCE = ACCOUNT_REFERENCE;
-    }
-
-    if (PHONE != null) {
-      this.conf.PHONE_NUMBER = PHONE;
-    }
-
-    if (AMOUNT != null) {
-      this.conf.AMOUNT = AMOUNT;
+  expressData = async (doc) => {
+    for (let field of mpesaFields) {
+      if (doc[field]) {
+        this.conf[field] = doc[field];
+      }
     }
 
     let params = await password(this.conf);
+
     return {
       BusinessShortCode: this.conf.BUSINESS_SHORT_CODE,
       Password: params.password,
@@ -61,48 +50,87 @@ class MpesaExpress {
     TRANSACTION_DESCRIPTION = null,
     ACCOUNT_REFERENCE = null
   ) => {
-    let token = await mtoken(this.conf, this.environment, this.token_auth_type);
-    let payload = await this.expressData(
-      PHONE,
-      AMOUNT,
-      TRANSACTION_DESCRIPTION,
-      ACCOUNT_REFERENCE
-    );
-    let res = await axios({
-      method: "POST",
-      headers: {
-        Authorization: `${this.auth_type} ${token.access_token}`,
-      },
-      url: this.stkPushUrl,
-      data: payload,
-    });
-    return res.data;
+    try {
+      let token = await mtoken(
+        this.conf,
+        this.environment,
+        this.token_auth_type
+      );
+      let payload = await this.expressData(
+        PHONE,
+        AMOUNT,
+        TRANSACTION_DESCRIPTION,
+        ACCOUNT_REFERENCE
+      );
+
+      let res = await axios({
+        method: "POST",
+        headers: {
+          Authorization: `${this.auth_type} ${token.access_token}`,
+        },
+        url: this.stkPushUrl,
+        data: payload,
+      });
+      return { error: false, data: res.data };
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data) {
+          return {
+            error: true,
+            data: error.response.data,
+            custom: "From daraja",
+          };
+        }
+        return { error: true, data: error.response, custom: "From daraja" };
+      }
+
+      return { error: true, data: error, custom: "From daraja" };
+    }
   };
 
   stkQuery = async (id) => {
     if (id == null) {
-      throw new Error("!!!! CheckoutRequestID Required");
+      return { error: true, custom: "Transaction id required. As parameter" };
     }
 
-    let params = await password(this.conf);
-    let token = await mtoken(this.conf, this.environment, this.token_auth_type);
+    try {
+      let params = await password(this.conf);
+      let token = await mtoken(
+        this.conf,
+        this.environment,
+        this.token_auth_type
+      );
 
-    let payload = {
-      BusinessShortCode: this.conf.BUSINESS_SHORT_CODE,
-      Password: params.password,
-      Timestamp: params.time,
-      CheckoutRequestID: id,
-    };
+      let payload = {
+        BusinessShortCode: this.conf.BUSINESS_SHORT_CODE,
+        Password: params.password,
+        Timestamp: params.time,
+        CheckoutRequestID: id,
+      };
 
-    let res = await axios({
-      method: "POST",
-      headers: {
-        Authorization: `${this.auth_type} ${token.access_token}`,
-      },
-      url: this.stkQueryUrl,
-      data: payload,
-    });
-    return res.data;
+      let res = await axios({
+        method: "POST",
+        headers: {
+          Authorization: `${this.auth_type} ${token.access_token}`,
+        },
+        url: this.stkQueryUrl,
+        data: payload,
+      });
+      return res.data;
+    } catch (error) {
+      if (error.response) {
+        if (error.response.data) {
+          return {
+            error: true,
+            data: error.response.data,
+            custom: "From daraja",
+          };
+        }
+        return { error: true, data: error.response, custom: "From daraja" };
+      }
+
+      return { error: true, data: error, custom: "From daraja" };
+    }
   };
 }
 
